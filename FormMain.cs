@@ -63,6 +63,7 @@ namespace DigitalAudioConsole
                 //  FrequencyDomain();
                 countForThread = m_WaveIn.m_Wave.Count() / numThreads;
                 ThreadStart(m_WaveIn.m_Wave);
+                
                 FormGraph formGraph = new FormGraph();
                 formGraph.Show();
                 formGraph.DisplayGraph(m_TimeFrequency, audioFileName);
@@ -274,6 +275,42 @@ namespace DigitalAudioConsole
             {
                 m_WaveIn = new WaveFile(fileStream);
             }
+        }
+
+        private void compareFloats(float[] array1, float[] array2)
+        {
+            float[] ans;
+            if (array1.Count() > array2.Count())
+            {
+                ans = new float[array1.Count()];
+            }
+
+            if (array2.Count() > array2.Count())
+            {
+                ans = new float[array2.Count()];
+            }
+
+            if (array1.Count() == array2.Count())
+            {
+                ans = new float[array1.Count()];
+                for (int i = 0; i < array1.Count(); i++)
+                {
+                    if (array1[i] == array2[i])
+                    {
+                        ans[i] = 0;
+                    }
+                    if (array1[i] > array2[i])
+                    {
+                        ans[i] = array1[i] - array2[i];
+                    }
+                    if (array1[i] > array2[i])
+                    {
+                        ans[i] = array2[i] - array1[i];
+                    }
+                }
+            }
+            
+
         }
 
         private void FormMain_Load(object sender, EventArgs e)
