@@ -80,6 +80,18 @@ namespace DigitalAudioConsole
             }
         }
 
+
+        static void WriteFile(float[] wave, string filename)
+        {
+            
+            StreamWriter sw = new StreamWriter(filename);
+            foreach (float a in wave)
+            {
+                sw.WriteLine(a);
+            }
+            sw.Close();
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -267,6 +279,22 @@ namespace DigitalAudioConsole
         private void FormMain_Load(object sender, EventArgs e)
         {
             txtThreads.Text = "1";
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                txtWaveSave.Text = openFileDialog.FileName;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string audioFileName = textBoxAudioFile.Text;
+            LoadWave(audioFileName);
+            WriteFile(m_WaveIn.m_Wave, txtWaveSave.Text);
+            MessageBox.Show("done");
         }
     }
 }
