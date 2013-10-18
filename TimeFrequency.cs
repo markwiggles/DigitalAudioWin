@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
+using System.Threading;
 
 namespace DigitalAudioConsole
 {
@@ -15,14 +16,51 @@ namespace DigitalAudioConsole
         public float[][] m_TimeFrequencyData;
         public int m_WindowSampleSize; // The number of sound samples to aggregate into one result
         private Complex[] m_Twiddles;
-
-
+        public List<float[]> wavelist = new List<float[]>();
+        
         /// <summary>
         /// Initialize the object
         /// </summary>
         /// <param name="originalWaveDataArray">The actual sound data as an array of floats between -1.0 and 1.0</param>
         /// <param name="windowSampleSize">The number of sound samples to aggregate into one result</param>
-        public TimeFrequency(float[] originalWaveDataArray, int windowSampleSize)
+        public TimeFrequency(float[] originalWaveDataArray, int windowSampleSize, int numThreads)
+        {
+            int countForThread = originalWaveDataArray.Count() / numThreads;
+            wavelist = new List<float[]>();
+
+            //Split the array into numthreads
+            int startNum = 0;
+            for (int i = 0; i < numThreads; i++)
+            {
+                float[] temp = new float[countForThread];
+                Array.Copy(originalWaveDataArray, startNum, temp, 0, countForThread);
+                wavelist.Add(temp);
+                startNum += countForThread;
+            }
+
+
+            List<Thread> threadlist = new List<Thread>();
+            foreach (float[] wave in wavelist)
+            {
+                Thread thread = new Thread(() =>
+                    {
+                        start(wave, windowSampleSize);
+                    });
+                threadlist.Add(thread);
+
+            }
+
+            foreach (Thread thread in threadlist)
+            {
+                thread.Start();
+            }
+            foreach (Thread thread in threadlist)
+            {
+                thread.Join();
+            }
+        }
+
+        private void start(float[] originalWaveDataArray, int windowSampleSize)
         {
             Complex imaginaryOne = Complex.ImaginaryOne;
             m_WindowSampleSize = windowSampleSize;
@@ -63,7 +101,6 @@ namespace DigitalAudioConsole
             // Now start the Voodoo math :)
             ShortTimeFourierTransform(complexDataArray);
         }
-
 
         /// <summary>
         /// This will determine the frequency and phase of the WAV audio data (Complex[] sourceComplexDataArray)

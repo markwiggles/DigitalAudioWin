@@ -60,10 +60,8 @@ namespace DigitalAudioConsole
             if (checkBoxDisplayGraph.Checked)
             {
                 // Create a "Spectrum Analysis" type map of the WAV file and set m_TimeFrequency with the resulting data.
-                //  FrequencyDomain();
-                countForThread = m_WaveIn.m_Wave.Count() / numThreads;
-                ThreadStart(m_WaveIn.m_Wave);
-                
+                FrequencyDomain(m_WaveIn.m_Wave);
+               
                 FormGraph formGraph = new FormGraph();
                 formGraph.Show();
                 formGraph.DisplayGraph(m_TimeFrequency, audioFileName);
@@ -255,7 +253,7 @@ namespace DigitalAudioConsole
             // Create a new TimeFrequency object, passing the actual sound data (m_WaveIn.m_Wave) as an array of floats and setting Sample Window to 2048
             // The Sample Window tells the Fourier Transform function how many samples to aggregate into one result. The window of samples is analyzed to determine
             // the predominant frequency in that particular range of samples.
-            m_TimeFrequency = new TimeFrequency(wave, 2048);
+            m_TimeFrequency = new TimeFrequency(wave, 2048, numThreads);
         }
 
 
