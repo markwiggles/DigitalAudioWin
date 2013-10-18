@@ -17,7 +17,7 @@ namespace DigitalAudioConsole
         public int m_WindowSampleSize; // The number of sound samples to aggregate into one result
         private Complex[] m_Twiddles;
         public List<float[]> wavelist = new List<float[]>();
-        
+        int numThreads;
         /// <summary>
         /// Initialize the object
         /// </summary>
@@ -25,6 +25,9 @@ namespace DigitalAudioConsole
         /// <param name="windowSampleSize">The number of sound samples to aggregate into one result</param>
         public TimeFrequency(float[] originalWaveDataArray, int windowSampleSize, int numThreads)
         {
+            this.numThreads = numThreads;
+            start(originalWaveDataArray, windowSampleSize);
+            /*
             int countForThread = originalWaveDataArray.Count() / numThreads;
             wavelist = new List<float[]>();
 
@@ -58,6 +61,7 @@ namespace DigitalAudioConsole
             {
                 thread.Join();
             }
+             */ 
         }
 
         private void start(float[] originalWaveDataArray, int windowSampleSize)
@@ -106,9 +110,9 @@ namespace DigitalAudioConsole
         /// This will determine the frequency and phase of the WAV audio data (Complex[] sourceComplexDataArray)
         /// </summary>
         /// <param name="sourceComplexDataArray">An array of Complex objects representing the wave data</param>
+        Complex[] transformedComplexArray;
         void ShortTimeFourierTransform(Complex[] sourceComplexDataArray)
         {
-            Complex[] transformedComplexArray;
             int sourceComplexDataArrayLength = sourceComplexDataArray.Length;
             int halfWindowSampleSize = m_WindowSampleSize / 2;
 
@@ -126,7 +130,39 @@ namespace DigitalAudioConsole
             // This starts the actual FFT. Each block of WAV data (2048 blocks of 2328 bytes) will be passed to FastFourierTransformation() when processing "Jupiter.wav".
             // This data is processed recursively by FastFourierTransformation() (the function calls itself), so virtual all of the required processing time is used in that function.
             Complex[] untransformedComplexArray = new Complex[m_WindowSampleSize];
-            for (int windowIndex = 0; windowIndex < columns - 1; windowIndex++)
+
+            int start = 0;
+            int countforthread = columns / numThreads;
+            int end = countforthread;
+            List<Thread> threadlist = new List<Thread>();
+
+            for (int i = 0; i < numThreads; i++)
+            {
+                Thread thread = new Thread(() =>
+                    {
+                        work(start, end, untransformedComplexArray, sourceComplexDataArray, halfWindowSampleSize);
+                    });
+                threadlist.Add(thread);
+                end += countforthread;
+                start += countforthread;
+            }
+
+            foreach (Thread thread in threadlist)
+            {
+                thread.Start();                
+            }
+
+            foreach (Thread thread in threadlist)
+            {
+                thread.Join();
+            }
+
+        }
+
+        private void work(int start, int end, Complex[] untransformedComplexArray, Complex[] sourceComplexDataArray, int halfWindowSampleSize)
+        {
+            
+            for (int windowIndex = start; windowIndex < end - 1; windowIndex++)
             {
                 for (int sampleIndex = 0; sampleIndex < m_WindowSampleSize; sampleIndex++)
                 {
@@ -143,8 +179,6 @@ namespace DigitalAudioConsole
                 }
             }
         }
-
-
         /// <summary>
         /// Calculates Time/Frequency of the wave data. This is a recursive function. It splits the input array into two arays
         /// conatining the ODD and EVEN entries of the array. It then calls itself again to process the new array. Each time
