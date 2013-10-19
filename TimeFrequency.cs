@@ -136,11 +136,27 @@ namespace DigitalAudioConsole
             int end = countforthread;
             List<Thread> threadlist = new List<Thread>();
 
+
             for (int i = 0; i < numThreads; i++)
             {
                 Thread thread = new Thread(() =>
                     {
-                        work(start, end, untransformedComplexArray, sourceComplexDataArray, halfWindowSampleSize);
+                        for (int windowIndex = start; windowIndex < end - 2; windowIndex++)
+                        {
+                            for (int sampleIndex = 0; sampleIndex < m_WindowSampleSize; sampleIndex++)
+                            {
+                                untransformedComplexArray[sampleIndex] = sourceComplexDataArray[windowIndex * halfWindowSampleSize + sampleIndex];
+                            }
+
+                            // Process this "window" of data
+                            transformedComplexArray = FastFourierTransformation(untransformedComplexArray);
+
+                            // Now we have a processed "window" of data. Copy the Complex data array into the final 2-dimensional array of floats
+                            for (int sampleIndex = 0; sampleIndex < halfWindowSampleSize; sampleIndex++)
+                            {
+                                m_TimeFrequencyData[sampleIndex][windowIndex] = (float)Complex.Abs(transformedComplexArray[sampleIndex]);
+                            }
+                        }
                     });
                 threadlist.Add(thread);
                 end += countforthread;
@@ -161,8 +177,7 @@ namespace DigitalAudioConsole
 
         private void work(int start, int end, Complex[] untransformedComplexArray, Complex[] sourceComplexDataArray, int halfWindowSampleSize)
         {
-            
-            for (int windowIndex = start; windowIndex < end - 1; windowIndex++)
+            for (int windowIndex = start; windowIndex < end -1; windowIndex++)
             {
                 for (int sampleIndex = 0; sampleIndex < m_WindowSampleSize; sampleIndex++)
                 {
